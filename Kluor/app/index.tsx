@@ -38,7 +38,7 @@ export default function HomeScreen() {
         urls: category.urls.split(","),
         earliestCreatedAt: category.earliestCreatedAt || "",
       }));
-      console.log("Fetched categories:", categories);
+      //console.log("Fetched categories:", categories);
 
       if (categories) setCollections(categories);
     }, [])

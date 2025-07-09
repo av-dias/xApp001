@@ -11,6 +11,7 @@ export type ObjectEntity = {
 };
 
 export type NewObjectEntity = {
+  id?: number;
   name?: string;
   category?: string;
   description?: string;
