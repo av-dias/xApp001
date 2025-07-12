@@ -1,7 +1,6 @@
+import { ObjectForm } from "@/components/ObjectForm/ObjectForm";
 import { NewObjectEntity, ObjectEntity } from "@/db/schema";
 import { insertOneObject } from "@/service/objects";
-import Entypo from "@expo/vector-icons/Entypo";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
@@ -11,7 +10,6 @@ import { router } from "expo-router";
 import { openDatabaseSync } from "expo-sqlite";
 import React, { useEffect, useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
-import { TextInput } from "react-native-paper";
 
 const expoDb = openDatabaseSync("db.db");
 const db = drizzle(expoDb);
@@ -26,6 +24,7 @@ export default function CameraScreen() {
   const [uri, setUri] = useState<string | null>(null);
   const [facing, setFacing] = useState<CameraType>("back");
   const [object, setObject] = useState<NewObjectEntity | null>(null); // State for object input
+  const [newTag, setNewTag] = useState<string | null>("");
 
   const CUSTOM_ALBUM_NAME = "Kluor"; // 👈 Define your desired folder name here
 
@@ -50,13 +49,7 @@ export default function CameraScreen() {
       return;
     }
 
-    if (
-      !object ||
-      !object.name ||
-      !object.category ||
-      !object.description ||
-      !object.rating
-    ) {
+    if (!object || !object.name || !object.category || !object.rating) {
       Alert.alert(
         "Please enter details",
         "Please enter details for the photo."
@@ -97,7 +90,7 @@ export default function CameraScreen() {
         const objectValue: ObjectEntity = {
           name: object.name,
           category: object.category,
-          description: object.description,
+          tags: object.tags || [],
           rating: object.rating,
           url: uri, // Use the photo URI as the URL
         };
@@ -131,67 +124,36 @@ export default function CameraScreen() {
     setFacing((prev) => (prev === "back" ? "front" : "back"));
   };
 
+  const handleCancel = () => {
+    setUri(null);
+    setNewTag(null);
+  };
+
   const renderPicture = () => {
     return (
       <View style={styles.saveContainer}>
-        <Image
-          source={typeof uri === "string" ? { uri } : undefined}
-          contentFit="fill"
-          style={{
-            width: "90%",
-            aspectRatio: 9 / 16,
-            borderRadius: 10,
-          }}
+        <View style={{ width: "60%" }}>
+          <Image
+            source={typeof uri === "string" ? { uri } : undefined}
+            contentFit="cover"
+            style={{
+              width: "100%",
+              aspectRatio: 9 / 16,
+              borderRadius: 10,
+            }}
+          />
+        </View>
+        <ObjectForm
+          objectEdit={object}
+          setObjectEdit={setObject}
+          tag={newTag}
+          setTag={setNewTag}
+          handleCancel={handleCancel}
+          handleUpdate={saveAndUsePicture}
+          cancelText={"Retry"}
+          clear={true}
+          horizontal={true}
         />
-        <View style={styles.pressableContainer}>
-          <Pressable
-            style={styles.pressableRedoStyle}
-            onPress={() => setUri(null)}
-          >
-            <FontAwesome5 name="redo-alt" size={20} color="white" />
-          </Pressable>
-          <Pressable
-            style={styles.pressableAcceptStyle}
-            onPress={saveAndUsePicture}
-          >
-            <Entypo name="check" size={22} color="lightgreen" />
-          </Pressable>
-        </View>
-        <View style={styles.inputContainer}>
-          <View style={styles.inputRowContainer}>
-            <TextInput
-              style={styles.inputStyle}
-              label="Name"
-              value={object?.name || ""}
-              onChangeText={(text) => setObject({ ...object, name: text })}
-            />
-            <TextInput
-              style={styles.inputStyle}
-              label="Category"
-              value={object?.category || ""}
-              onChangeText={(text) => setObject({ ...object, category: text })}
-            />
-          </View>
-          <View style={styles.inputRowContainer}>
-            <TextInput
-              style={styles.inputStyle}
-              label="Description"
-              value={object?.description || ""}
-              onChangeText={(text) =>
-                setObject({ ...object, description: text })
-              }
-            />
-            <TextInput
-              keyboardType="numeric"
-              style={styles.inputStyle}
-              label="Rating"
-              value={object?.rating !== undefined ? String(object.rating) : ""}
-              onChangeText={(text) =>
-                setObject({ ...object, rating: Number(text) })
-              }
-            />
-          </View>
-        </View>
       </View>
     );
   };
@@ -260,14 +222,15 @@ const styles = StyleSheet.create({
   },
   saveContainer: {
     flex: 1,
-    padding: 20,
+    width: "100%",
+    padding: 15,
     paddingTop: 50,
     alignItems: "center",
     gap: 20,
   },
   pressableContainer: {
     position: "absolute",
-    bottom: 300,
+    bottom: 400,
     flexDirection: "row",
     gap: 30,
   },
@@ -295,17 +258,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: 200,
-    gap: 20,
+    gap: 10,
     zIndex: 1,
   },
   inputRowContainer: {
-    height: 40,
+    height: 50,
     flexDirection: "row",
     gap: 20,
   },
   inputStyle: {
     height: 50,
     width: 150,
+    borderRadius: 5,
+  },
+  inputRateStyle: {
+    height: 50,
+    width: 80,
     borderRadius: 5,
   },
   shutterContainer: {
