@@ -24,7 +24,7 @@ export default function CameraScreen() {
   const [uri, setUri] = useState<string | null>(null);
   const [facing, setFacing] = useState<CameraType>("back");
   const [object, setObject] = useState<NewObjectEntity | null>(null); // State for object input
-  const [newTag, setNewTag] = useState<string | null>("");
+  const [newTag, setNewTag] = useState<string | null>(null);
 
   const CUSTOM_ALBUM_NAME = "Kluor"; // 👈 Define your desired folder name here
 
@@ -94,9 +94,8 @@ export default function CameraScreen() {
           rating: object.rating,
           url: uri, // Use the photo URI as the URL
         };
-
         insertOneObject(db, objectValue);
-        console.log("Object inserted into database:", object);
+        console.log("Object inserted into database:", objectValue);
         setUri(null);
         setObject(null); // Reset object after saving
         router.push("/");
