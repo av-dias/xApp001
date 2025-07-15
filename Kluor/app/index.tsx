@@ -6,8 +6,10 @@ import { router, useFocusEffect } from "expo-router"; // 👈 Import the router 
 import { openDatabaseSync } from "expo-sqlite";
 import React, { useCallback } from "react";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
-import { Searchbar } from "react-native-paper";
 import migrations from "../drizzle/migrations"; // Adjust the path to your migrations file
+import { objects } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { ThemeColor, ThemeMode, ThemeStyle } from "@/utility/styling";
 
 const expoDb = openDatabaseSync("db.db");
 const db = drizzle(expoDb);
@@ -20,6 +22,10 @@ type CollectionType = {
 };
 
 export default function HomeScreen() {
+  const themeMode: ThemeMode = "light";
+  const theme = ThemeColor(themeMode);
+  const styling = ThemeStyle(themeMode);
+
   const [searchQuery, setSearchQuery] = React.useState("");
   const [collections, setCollections] = React.useState<CollectionType[]>([]);
   const { success, error } = useMigrations(db, migrations);
@@ -29,6 +35,42 @@ export default function HomeScreen() {
   } else if (error) {
     console.error("Migration error:", error);
   }
+
+  /**
+   * This will trigger db update
+   */
+  useFocusEffect(
+    useCallback(() => {
+      let updateCounter = 0;
+
+      // Map object map tags if empty from description split
+      const allObjects = db
+        .select()
+        .from(objects)
+        .all()
+        .map((obj) => {
+          if (obj.tags.length === 0) updateCounter++;
+          const tags =
+            obj.tags.length === 0 ? (obj?.description ?? "").split(",") : [];
+          return { ...obj, tags: tags };
+        });
+
+      console.log(`Update Counter: ${updateCounter}`);
+
+      if (updateCounter === 0) return;
+
+      console.log(`Updating database.`);
+
+      allObjects.forEach(
+        async (objUpdated) =>
+          await db
+            .update(objects)
+            .set(objUpdated)
+            .where(eq(objects.id, objUpdated.id))
+            .returning()
+      );
+    }, [])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -52,14 +94,8 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={{ flex: 1, padding: 15, paddingTop: 40, gap: 20 }}>
-      <Searchbar
-        placeholder="Search"
-        style={{ borderRadius: 10 }}
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-      />
-      <Text style={{ fontSize: 18, fontWeight: "bold" }}>Categories</Text>
+    <View style={styling.UsableScreen}>
+      <Text style={styling.TextHeader}>Collections</Text>
       <ScrollView contentContainerStyle={{ flex: 1, gap: 10 }}>
         {collections.map((collection) => (
           <Pressable
@@ -74,11 +110,7 @@ export default function HomeScreen() {
           >
             <Image
               key={collection.urls[0]}
-              style={{
-                width: 100,
-                height: 100,
-                borderRadius: 10,
-              }}
+              style={styling.ImageContainer}
               source={{ uri: collection.urls[0] }}
               resizeMode="cover"
             />
@@ -95,11 +127,7 @@ export default function HomeScreen() {
             name="add"
             size={24}
             color="white"
-            style={{
-              backgroundColor: "lightblue",
-              padding: 15,
-              borderRadius: 10,
-            }}
+            style={styling.PrimaryBtn}
           />
         </Pressable>
       </View>

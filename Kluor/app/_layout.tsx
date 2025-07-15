@@ -6,6 +6,7 @@ import React, { useEffect } from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import { Text, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -56,43 +57,55 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <ErrorBoundary>
-      <Tabs>
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: "Collection",
-            headerShown: false,
-            tabBarIcon: () => <AntDesign name="home" size={24} color="black" />,
-          }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: "Settings",
-            headerShown: false,
-            tabBarIcon: () => (
-              <Feather name="settings" size={24} color="black" />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="category"
-          options={{
-            title: "Categories",
-            headerShown: false,
-            href: null,
-          }}
-        />
-        <Tabs.Screen
-          name="camera"
-          options={{
-            title: "Camera",
-            headerShown: false,
-            href: null,
-          }}
-        />
-      </Tabs>
-    </ErrorBoundary>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ErrorBoundary>
+        <Tabs>
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: "Collection",
+              headerShown: false,
+              tabBarIcon: () => (
+                <AntDesign name="home" size={24} color="black" />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="settings"
+            options={{
+              title: "Settings",
+              headerShown: false,
+              tabBarIcon: () => (
+                <Feather name="settings" size={24} color="black" />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="category"
+            options={{
+              title: "Categories",
+              headerShown: false,
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="details"
+            options={{
+              title: "Details",
+              headerShown: false,
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="camera"
+            options={{
+              title: "Camera",
+              headerShown: false,
+              href: null,
+            }}
+          />
+        </Tabs>
+      </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 }
