@@ -1,0 +1,1 @@
+ALTER TABLE `objects` ADD `tags` text DEFAULT '[]' NOT NULL;
