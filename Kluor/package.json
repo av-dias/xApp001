@@ -1,7 +1,7 @@
 {
   "name": "kluor",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -12,15 +12,17 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "@react-native-community/slider": "^4.5.7",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
     "babel-plugin-inline-import": "^3.0.0",
     "drizzle-orm": "^0.44.2",
     "eventemitter3": "^5.0.1",
-    "expo": "53.0.18",
+    "expo": "53.0.19",
     "expo-blur": "~14.1.5",
     "expo-camera": "~16.1.10",
+    "expo-clipboard": "~7.1.5",
     "expo-constants": "~17.1.6",
     "expo-dev-client": "~5.2.4",
     "expo-font": "~13.3.2",
