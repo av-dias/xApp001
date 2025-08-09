@@ -1,21 +1,25 @@
 import { ThemeColor, ThemeMode, ThemeStyle } from "@/utility/styling";
 import { ReactNode } from "react";
-import { Pressable, Text } from "react-native";
+import { Pressable, StyleProp, Text, TextStyle } from "react-native";
 
 type ButtonPropsType = {
   text: string | ReactNode;
   color?: string;
+  textStyle?: StyleProp<TextStyle>;
   callback: (any: any) => any;
   customStyle?: any;
   paddingHorizontal?: number;
+  paddingVertical?: number;
 };
 
 export const Button = ({
   text,
   color,
+  textStyle,
   callback,
   customStyle,
   paddingHorizontal = 15,
+  paddingVertical = 10,
 }: ButtonPropsType) => {
   const themeMode: ThemeMode = "light";
   const theme = ThemeColor(themeMode);
@@ -26,7 +30,7 @@ export const Button = ({
       onPress={callback}
       style={[
         {
-          padding: 10,
+          padding: paddingVertical,
           paddingHorizontal: paddingHorizontal,
           borderRadius: 10,
           alignItems: "center",
@@ -35,7 +39,7 @@ export const Button = ({
         customStyle,
       ]}
     >
-      <Text style={styling.TextPrimaryTitle}>{text}</Text>
+      <Text style={[styling.TextPrimaryTitle, textStyle]}>{text}</Text>
     </Pressable>
   );
 };
