@@ -5,6 +5,9 @@ import { TagGroup } from "../TagGroup/TagGroup";
 import { NewObjectEntity } from "@/db/schema";
 import { ThemeMode, ThemeColor, ThemeStyle } from "@/utility/styling";
 import { styles } from "./style";
+import Slider from "@react-native-community/slider";
+import { SmartInput } from "../SmartInput/SmartInput";
+import { Dispatch, SetStateAction } from "react";
 
 type ObjectFormPropsType = {
   objectEdit: NewObjectEntity | null;
@@ -16,6 +19,20 @@ type ObjectFormPropsType = {
   cancelText?: string;
   clear?: boolean;
   horizontal?: boolean;
+  options: string[];
+};
+
+const validateRate = (
+  rate: number | undefined,
+  setObjectEdit: Dispatch<SetStateAction<NewObjectEntity | null>>
+) => {
+  if (rate === undefined || rate === null || isNaN(rate)) {
+    setObjectEdit((prev) => ({ ...prev, rating: 5 }));
+  } else if (rate < 0) {
+    setObjectEdit((prev) => ({ ...prev, rating: 0 }));
+  } else if (rate > 10) {
+    setObjectEdit((prev) => ({ ...prev, rating: 10 }));
+  }
 };
 
 export const ObjectForm = ({
@@ -28,6 +45,7 @@ export const ObjectForm = ({
   cancelText = "Cancel",
   clear = false,
   horizontal,
+  options,
 }: ObjectFormPropsType) => {
   const themeMode: ThemeMode = "light";
   const theme = ThemeColor(themeMode);
@@ -38,6 +56,9 @@ export const ObjectForm = ({
     setTag(null);
   };
 
+  // Ensure rating is defined to default value
+  if (!objectEdit?.rating) objectEdit = { ...objectEdit, rating: 5 };
+
   return (
     <View style={styles.inputRowContainer}>
       <GlassTextInput
@@ -47,21 +68,37 @@ export const ObjectForm = ({
           setObjectEdit({ ...objectEdit, name: text })
         }
       />
-      <GlassTextInput
-        placeholder="Category"
+      <SmartInput
         value={objectEdit?.category}
-        onChangeCallback={(text) =>
-          setObjectEdit({ ...objectEdit, category: text })
-        }
+        setValue={(text) => setObjectEdit({ ...objectEdit, category: text })}
+        options={options}
+        placeholder="Category"
       />
-      <GlassTextInput
-        placeholder="Rate"
-        value={objectEdit?.rating}
-        keyboardType="numeric"
-        onChangeCallback={(text) =>
-          setObjectEdit({ ...objectEdit, rating: Number(text) })
-        }
-      />
+      <View style={{ flexDirection: "row", gap: 0, alignItems: "center" }}>
+        <GlassTextInput
+          style={{ width: 60, textAlign: "center" }}
+          placeholder="Rate"
+          value={objectEdit?.rating}
+          keyboardType="numeric"
+          onChangeCallback={(text) =>
+            setObjectEdit({ ...objectEdit, rating: Number(text) })
+          }
+          onBlurCallback={() => validateRate(objectEdit?.rating, setObjectEdit)}
+        />
+        <View style={{ flex: 1 }}>
+          <Slider
+            value={objectEdit?.rating}
+            onValueChange={(rate) =>
+              setObjectEdit({ ...objectEdit, rating: rate })
+            }
+            thumbTintColor={theme.button}
+            minimumTrackTintColor={theme.button}
+            minimumValue={0}
+            maximumValue={10}
+            step={0.5}
+          />
+        </View>
+      </View>
       <TagForm
         value={tag}
         onChangeTextCallback={setTag}
