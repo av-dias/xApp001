@@ -1,7 +1,10 @@
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { openDatabaseSync } from "expo-sqlite";
-import { objects } from "./schema";
 
-const sqlite = openDatabaseSync("app.db");
+export const DB_NAME = "db.db"; // Change this to your desired database name
 
-export const db = drizzle(sqlite, { schema: { items: objects } });
+export const getDatabase = () => {
+  const expoDb = openDatabaseSync(DB_NAME);
+  const db = drizzle(expoDb);
+  return db;
+};
