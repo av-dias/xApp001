@@ -1,18 +1,19 @@
-import { getAllObjectsCategories } from "@/service/objects";
+import {
+  getAllObjects,
+  getAllObjectsCategories,
+  updateObjectById,
+} from "@/service/objects";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { drizzle } from "drizzle-orm/expo-sqlite";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { router, useFocusEffect } from "expo-router"; // 👈 Import the router object
-import { openDatabaseSync } from "expo-sqlite";
 import React, { useCallback } from "react";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import migrations from "../drizzle/migrations"; // Adjust the path to your migrations file
-import { objects } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { ThemeColor, ThemeMode, ThemeStyle } from "@/utility/styling";
 
-const expoDb = openDatabaseSync("db.db");
-const db = drizzle(expoDb);
+import { ThemeColor, ThemeMode, ThemeStyle } from "@/utility/styling";
+import { getDatabase } from "@/db/client";
+
+const db = getDatabase();
 
 type CollectionType = {
   category: string;
@@ -44,31 +45,26 @@ export default function HomeScreen() {
       let updateCounter = 0;
 
       // Map object map tags if empty from description split
-      const allObjects = db
-        .select()
-        .from(objects)
-        .all()
-        .map((obj) => {
-          if (obj.tags.length === 0) updateCounter++;
+      const allObjects = getAllObjects(db)?.map((obj) => {
+        if (
+          obj.tags.length === 0 &&
+          obj.description !== null &&
+          obj.description.trim() !== ""
+        ) {
+          updateCounter++;
           const tags =
-            obj.tags.length === 0 ? (obj?.description ?? "").split(",") : [];
+            obj.tags.length === 0
+              ? (obj?.description ?? "").split(",")
+              : obj.tags;
+
+          updateObjectById(db, obj.id, { ...obj, tags: tags });
           return { ...obj, tags: tags };
-        });
+        }
+        return obj;
+      });
 
-      console.log(`Update Counter: ${updateCounter}`);
-
-      if (updateCounter === 0) return;
-
-      console.log(`Updating database.`);
-
-      allObjects.forEach(
-        async (objUpdated) =>
-          await db
-            .update(objects)
-            .set(objUpdated)
-            .where(eq(objects.id, objUpdated.id))
-            .returning()
-      );
+      if (allObjects)
+        console.log(`Updated Counter: ${updateCounter}/${allObjects.length}`);
     }, [])
   );
 
@@ -80,7 +76,6 @@ export default function HomeScreen() {
         urls: category.urls.split(","),
         earliestCreatedAt: category.earliestCreatedAt || "",
       }));
-      //console.log("Fetched categories:", categories);
 
       if (categories) setCollections(categories);
     }, [])
@@ -96,7 +91,10 @@ export default function HomeScreen() {
   return (
     <View style={styling.UsableScreen}>
       <Text style={styling.TextHeader}>Collections</Text>
-      <ScrollView contentContainerStyle={{ flex: 1, gap: 10 }}>
+      <ScrollView
+        horizontal={false}
+        contentContainerStyle={{ flex: 1, gap: 10 }}
+      >
         {collections.map((collection) => (
           <Pressable
             key={collection.category}
