@@ -1,43 +1,59 @@
 import { ObjectForm } from "@/components/ObjectForm/ObjectForm";
 import { NewObjectEntity, ObjectEntity } from "@/db/schema";
-import { insertOneObject } from "@/service/objects";
+import { getAvailableCategories, insertOneObject } from "@/service/objects";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import { drizzle } from "drizzle-orm/expo-sqlite";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import { Image } from "expo-image";
 import * as MediaLibrary from "expo-media-library"; // Make sure this is imported
-import { router } from "expo-router";
-import { openDatabaseSync } from "expo-sqlite";
-import React, { useEffect, useRef, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import { useIsFocused } from "@react-navigation/native";
+import { getDatabase } from "@/db/client";
+import { Button } from "@/components/Button/Button";
+import { ThemeMode, ThemeColor } from "@/utility/styling";
 
-const expoDb = openDatabaseSync("db.db");
-const db = drizzle(expoDb);
+const db = getDatabase();
 
 export default function CameraScreen() {
+  const themeMode: ThemeMode = "light";
+  const theme = ThemeColor(themeMode);
   const [permission, requestPermission] = useCameraPermissions();
   const [hasMediaLibraryPermission, setHasMediaLibraryPermission] = useState<
     boolean | null
   >(null);
-  //const [mediaPermission, requestPermission] =
   const ref = useRef<CameraView>(null);
   const [uri, setUri] = useState<string | null>(null);
   const [facing, setFacing] = useState<CameraType>("back");
   const [object, setObject] = useState<NewObjectEntity | null>(null); // State for object input
   const [newTag, setNewTag] = useState<string | null>(null);
-
+  const [availableOptions, setAvailableOptions] = useState<string[]>([]);
+  const isCameraFocused = useIsFocused(); // Check if the camera screen is focused to allow mount/unmount behavior
   const CUSTOM_ALBUM_NAME = "Kluor"; // 👈 Define your desired folder name here
+
+  const _handlePressButtonAsync = async () => {
+    await WebBrowser.openBrowserAsync(
+      "https://huggingface.co/spaces/avdias/gc"
+    );
+  };
 
   useEffect(() => {
     (async () => {
       // 👈 This is where you request Media Library permissions
       const mediaLibraryStatus = await MediaLibrary.requestPermissionsAsync();
       setHasMediaLibraryPermission(mediaLibraryStatus.status === "granted");
-
       requestPermission();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchOptions = getAvailableCategories(db);
+      setAvailableOptions(fetchOptions || []);
+    }, [])
+  );
 
   if (!permission || !hasMediaLibraryPermission) {
     return null;
@@ -117,6 +133,7 @@ export default function CameraScreen() {
   const takePicture = async () => {
     const photo = await ref.current?.takePictureAsync({ shutterSound: false });
     setUri(photo?.uri ?? null);
+    console.log(photo?.uri);
   };
 
   const toggleFacing = () => {
@@ -131,7 +148,7 @@ export default function CameraScreen() {
   const renderPicture = () => {
     return (
       <View style={styles.saveContainer}>
-        <View style={{ width: "60%" }}>
+        <View style={{ width: "50%" }}>
           <Image
             source={typeof uri === "string" ? { uri } : undefined}
             contentFit="cover"
@@ -142,6 +159,13 @@ export default function CameraScreen() {
             }}
           />
         </View>
+        <Button
+          customStyle={{ borderRadius: 10 }}
+          color={theme.button}
+          text="Predict"
+          paddingVertical={5}
+          callback={_handlePressButtonAsync}
+        />
         <ObjectForm
           objectEdit={object}
           setObjectEdit={setObject}
@@ -152,6 +176,7 @@ export default function CameraScreen() {
           cancelText={"Retry"}
           clear={true}
           horizontal={true}
+          options={availableOptions}
         />
       </View>
     );
@@ -159,45 +184,51 @@ export default function CameraScreen() {
 
   const renderCamera = () => {
     return (
-      <CameraView
-        style={styles.camera}
-        ref={ref}
-        mode={"picture"}
-        facing={facing}
-        mute={false}
-        responsiveOrientationWhenOrientationLocked
-      >
-        <Pressable style={styles.shutterContainer} onPress={takePicture}>
-          {({ pressed }) => (
-            <View
-              style={[
-                styles.shutterBtn,
-                {
-                  opacity: pressed ? 0.5 : 1,
-                },
-              ]}
-            >
-              <View style={styles.shutterBtnInner} />
-            </View>
-          )}
-        </Pressable>
-        <View
-          style={{
-            position: "absolute",
-            bottom: 60,
-            left: "40%",
-            width: "100%",
-            alignItems: "center",
-            flexDirection: "row",
-            justifyContent: "center",
-            paddingHorizontal: 30,
+      isCameraFocused && (
+        <CameraView
+          style={styles.camera}
+          ref={ref}
+          mode={"picture"}
+          facing={facing}
+          mute={false}
+          onMountError={(error) => {
+            console.log(error);
+            alert(error);
           }}
+          responsiveOrientationWhenOrientationLocked
         >
-          <Pressable onPress={toggleFacing}>
-            <FontAwesome6 name="rotate-left" size={32} color="white" />
+          <Pressable style={styles.shutterContainer} onPress={takePicture}>
+            {({ pressed }) => (
+              <View
+                style={[
+                  styles.shutterBtn,
+                  {
+                    opacity: pressed ? 0.5 : 1,
+                  },
+                ]}
+              >
+                <View style={styles.shutterBtnInner} />
+              </View>
+            )}
           </Pressable>
-        </View>
-      </CameraView>
+          <View
+            style={{
+              position: "absolute",
+              bottom: 60,
+              left: "40%",
+              width: "100%",
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "center",
+              paddingHorizontal: 30,
+            }}
+          >
+            <Pressable onPress={toggleFacing}>
+              <FontAwesome6 name="rotate-left" size={32} color="white" />
+            </Pressable>
+          </View>
+        </CameraView>
+      )
     );
   };
 
