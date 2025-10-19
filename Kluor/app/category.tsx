@@ -1,6 +1,7 @@
 import { AlertBox } from "@/components/AlertBox/AlertBox";
 import { Button } from "@/components/Button/Button";
 import { TagGroup } from "@/components/TagGroup/TagGroup";
+import { getDatabase } from "@/db/client";
 import { ObjectEntity } from "@/db/schema";
 import {
   deleteObjectById,
@@ -8,14 +9,11 @@ import {
 } from "@/service/objects";
 import { ThemeColor, ThemeMode, ThemeStyle } from "@/utility/styling";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { drizzle } from "drizzle-orm/expo-sqlite";
 import { router, useFocusEffect, useGlobalSearchParams } from "expo-router";
-import { openDatabaseSync } from "expo-sqlite";
 import React, { useCallback, useState } from "react";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
-const expoDb = openDatabaseSync("db.db");
-const db = drizzle(expoDb);
+const db = getDatabase();
 
 type CategoryScreenProps = {
   category: string;
@@ -28,7 +26,6 @@ export default function CategoryScreen() {
 
   const params: CategoryScreenProps = useGlobalSearchParams();
   const category = params.category;
-  const [searchQuery, setSearchQuery] = useState("");
   const [objects, setObjects] = useState<ObjectEntity[]>([]);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
