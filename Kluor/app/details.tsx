@@ -1,9 +1,11 @@
-import { getObjectById, updateObjectById } from "@/service/objects";
+import {
+  getAvailableCategories,
+  getObjectById,
+  updateObjectById,
+} from "@/service/objects";
 import { router, useFocusEffect, useGlobalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { View, Text, Image, Pressable } from "react-native";
-import { drizzle } from "drizzle-orm/expo-sqlite";
-import { openDatabaseSync } from "expo-sqlite";
 import { NewObjectEntity, ObjectEntity } from "@/db/schema";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { ThemeColor, ThemeMode, ThemeStyle } from "@/utility/styling";
@@ -11,12 +13,12 @@ import { TagGroup } from "@/components/TagGroup/TagGroup";
 import { ObjectForm } from "@/components/ObjectForm/ObjectForm";
 import { Button } from "@/components/Button/Button";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { getDatabase } from "@/db/client";
 type DetailsScreenProps = {
   detailId: string;
 };
 
-const expoDb = openDatabaseSync("db.db");
-const db = drizzle(expoDb);
+const db = getDatabase();
 
 export default function DetailsScreen() {
   const themeMode: ThemeMode = "light";
@@ -30,6 +32,7 @@ export default function DetailsScreen() {
   const [objectEdit, setObjectEdit] = useState<NewObjectEntity | null>(null); // State for object input
   const [isEditing, setIsEditing] = useState(false); // State to toggle edit mode
   const [tag, setTag] = useState<string | null>(null);
+  const [availableOptions, setAvailableOptions] = useState<string[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -41,6 +44,8 @@ export default function DetailsScreen() {
           setObjectEdit(objectDetails);
         }
       }
+      const fetchOptions = getAvailableCategories(db);
+      setAvailableOptions(fetchOptions || []);
     }, [detailId])
   );
 
@@ -159,6 +164,7 @@ export default function DetailsScreen() {
           handleCancel={handleCancel}
           handleUpdate={handleUpdate}
           horizontal={true}
+          options={availableOptions}
         />
       )}
     </View>
