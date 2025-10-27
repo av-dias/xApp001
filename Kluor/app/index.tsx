@@ -10,8 +10,8 @@ import React, { useCallback } from "react";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import migrations from "../drizzle/migrations"; // Adjust the path to your migrations file
 
-import { ThemeColor, ThemeMode, ThemeStyle } from "@/utility/styling";
 import { getDatabase } from "@/db/client";
+import { ThemeColor, ThemeMode, ThemeStyle } from "@/utility/styling";
 
 const db = getDatabase();
 
@@ -93,7 +93,8 @@ export default function HomeScreen() {
       <Text style={styling.TextHeader}>Collections</Text>
       <ScrollView
         horizontal={false}
-        contentContainerStyle={{ flex: 1, gap: 10 }}
+        contentContainerStyle={{ gap: 10 }}
+        showsVerticalScrollIndicator={false}
       >
         {collections.map((collection) => (
           <Pressable
